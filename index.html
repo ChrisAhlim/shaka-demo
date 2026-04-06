@@ -107,13 +107,7 @@
         const controls = ui.getControls();
         player = controls.getPlayer();
 
-        const config = {
-          enableTooltips: true,
-          seekBarColors: {
-            base: "rgba(165, 134, 255, 0.1)",
-            buffered: "rgba(255, 255, 255, 0.54)",
-            played: "rgb(203, 125, 115)",
-          },
+        player.configure({
           abr: {
             enabled: true,
             useNetworkInformation: true,
@@ -147,6 +141,15 @@
               baseDelay: 100,
             },
           },
+        });
+
+        const config = {
+          enableTooltips: true,
+          seekBarColors: {
+            base: "rgba(165, 134, 255, 0.1)",
+            buffered: "rgba(255, 255, 255, 0.54)",
+            played: "rgb(203, 125, 115)",
+          },
         };
 
         ui.configure(config);
@@ -172,32 +175,52 @@
       function updateStats() {
         const video = document.getElementById("shaka-video");
 
+        // Resolution
         const resolution =
           video.videoWidth && video.videoHeight
             ? `${video.videoWidth}x${video.videoHeight}`
             : "n/a";
 
+        // Buffer
         let bufferSec = 0;
         if (video.buffered.length > 0) {
           const bufferedEnd = video.buffered.end(video.buffered.length - 1);
           bufferSec = (bufferedEnd - video.currentTime).toFixed(2);
         }
 
+        // Dropped frames
         const dropped = video.getVideoPlaybackQuality
           ? video.getVideoPlaybackQuality().droppedVideoFrames
           : "N/A";
 
-        const stats = player.getStats();
-        const bitrate = stats.streamBandwidth
-          ? `${(stats.streamBandwidth / 1000).toFixed(2)} kbps`
-          : "N/A";
+        // =========================
+        // SHAKA BITRATE STATS
+        // =========================
+        let bitrate = "N/A";
+        let bandwidth = "N/A";
+
+        if (player) {
+          const stats = player.getStats();
+
+          if (stats) {
+            // Current playing bitrate (bps → kbps)
+            if (stats.streamBandwidth) {
+              bitrate = (stats.streamBandwidth / 1000).toFixed(0) + " kbps";
+            }
+
+            // // Estimated network bandwidth
+            // if (stats.estimatedBandwidth) {
+            //   bandwidth = (stats.estimatedBandwidth / 1000).toFixed(0) + ' kbps';
+            // }
+          }
+        }
 
         statsBox.innerHTML = `
-        Resolution: ${resolution}<br>
-        Buffer: ${bufferSec}s<br>
-        Dropped Frames: ${dropped}<br>
-        Bitrate: ${bitrate}
-      `;
+    Resolution: ${resolution}<br>
+    Bitrate: ${bitrate}<br>
+    Buffer: ${bufferSec}s<br>
+    Dropped Frames: ${dropped}
+  `;
       }
 
       setInterval(updateStats, 1000);
