@@ -187,8 +187,9 @@
           ? video.getVideoPlaybackQuality().droppedVideoFrames
           : "N/A";
 
-        const bitrate = player.getStats().streamBandwidth
-          ? `${(player.getStats().streamBandwidth / 1000).toFixed(2)} kbps`
+        const stats = player.getStats();
+        const bitrate = stats.streamBandwidth
+          ? `${(stats.streamBandwidth / 1000).toFixed(2)} kbps`
           : "N/A";
 
         statsBox.innerHTML = `
